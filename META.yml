@@ -23,7 +23,8 @@ no_index:
     - t
 requires:
   DBI: 1.57
-  DBIx::Publish: 0.02
+  DBIx::Publish: 0.03
+  File::Remove: 1.42
   Getopt::Long: 2.37
   Object::Tiny: 1.06
   Params::Util: 0.35
@@ -32,4 +33,4 @@ resources:
   ChangeLog: http://fisheye2.atlassian.com/changelog/cpan/trunk/Xtract
   license: http://dev.perl.org/licenses/
   repository: http://svn.ali.as/cpan/trunk/Xtract
-version: 0.02
+version: 0.03
