@@ -1,0 +1,35 @@
+---
+abstract: 'Take your database and deliver it to the world'
+author:
+  - 'Adam Kennedy <adamk@cpan.org>'
+build_requires:
+  ExtUtils::MakeMaker: 6.42
+  File::Remove: 1.42
+  File::Spec: 0.80
+  Test::More: 0.42
+configure_requires:
+  ExtUtils::MakeMaker: 6.42
+distribution_type: module
+generated_by: 'Module::Install version 0.85'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+module_name: Xtract
+name: Xtract
+no_index:
+  directory:
+    - inc
+    - t
+requires:
+  DBI: 1.57
+  DBIx::Publish: 0.02
+  Getopt::Long: 2.37
+  Object::Tiny: 1.06
+  Params::Util: 0.35
+  perl: 5.6.0
+resources:
+  ChangeLog: http://fisheye2.atlassian.com/changelog/cpan/trunk/Xtract
+  license: http://dev.perl.org/licenses/
+  repository: http://svn.ali.as/cpan/trunk/Xtract
+version: 0.01
