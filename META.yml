@@ -1,5 +1,5 @@
 ---
-abstract: 'Take your database and deliver it to the world'
+abstract: 'Take any database and deliver it to the world'
 author:
   - 'Adam Kennedy <adamk@cpan.org>'
 build_requires:
@@ -32,4 +32,4 @@ resources:
   ChangeLog: http://fisheye2.atlassian.com/changelog/cpan/trunk/Xtract
   license: http://dev.perl.org/licenses/
   repository: http://svn.ali.as/cpan/trunk/Xtract
-version: 0.01
+version: 0.02
