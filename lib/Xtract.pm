@@ -4,7 +4,7 @@ package Xtract;
 
 =head1 NAME
 
-Xtract - Take any database and deliver it to the world
+Xtract - Take any data source and deliver it to the world
 
 =head1 DESCRIPTION
 
@@ -18,7 +18,7 @@ More information to follow...
 
 =cut
 
-use 5.006;
+use 5.008005;
 use strict;
 use warnings;
 use Getopt::Long  2.37 ();
@@ -27,7 +27,7 @@ use Params::Util  0.35 ();
 use DBIx::Publish 0.03 ();
 use DBI           1.57 ();
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use Object::Tiny 1.06 qw{
 	from
