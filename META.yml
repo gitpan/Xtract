@@ -3,6 +3,7 @@ abstract: 'Take any data source and deliver it to the world'
 author:
   - 'Adam Kennedy <adamk@cpan.org>'
 build_requires:
+  Aspect: 0.14
   ExtUtils::MakeMaker: 6.42
   File::Remove: 1.42
   File::Spec: 0.80
@@ -22,10 +23,12 @@ no_index:
     - inc
     - t
 requires:
+  DBD::SQLite: 1.25
   DBI: 1.57
-  DBIx::Publish: 0.03
   File::Remove: 1.42
   Getopt::Long: 2.37
+  IO::Compress::Bzip2: 2.008
+  IO::Compress::Gzip: 2.008
   Object::Tiny: 1.06
   Params::Util: 0.35
   perl: 5.8.5
@@ -33,4 +36,4 @@ resources:
   ChangeLog: http://fisheye2.atlassian.com/changelog/cpan/trunk/Xtract
   license: http://dev.perl.org/licenses/
   repository: http://svn.ali.as/cpan/trunk/Xtract
-version: 0.04
+version: 0.05
