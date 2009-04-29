@@ -11,7 +11,7 @@ build_requires:
 configure_requires:
   ExtUtils::MakeMaker: 6.42
 distribution_type: module
-generated_by: 'Module::Install version 0.85'
+generated_by: 'Module::Install version 0.83'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -31,9 +31,11 @@ requires:
   IO::Compress::Gzip: 2.008
   Object::Tiny: 1.06
   Params::Util: 0.35
+  Time::Elapsed: 0.24
+  Time::HiRes: 1.9709
   perl: 5.8.5
 resources:
   ChangeLog: http://fisheye2.atlassian.com/changelog/cpan/trunk/Xtract
   license: http://dev.perl.org/licenses/
   repository: http://svn.ali.as/cpan/trunk/Xtract
-version: 0.05
+version: 0.06

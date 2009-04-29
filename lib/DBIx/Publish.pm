@@ -52,7 +52,7 @@ use DBD::SQLite  ();
 
 use vars qw{$VERSION};
 BEGIN {
-	$VERSION = '0.05';
+	$VERSION = '0.06';
 }
 
 use Object::Tiny 1.06 qw{
@@ -60,6 +60,7 @@ use Object::Tiny 1.06 qw{
 	file
 	source
 	dbh
+	sqlite_cache
 };
 
 
@@ -106,6 +107,15 @@ sub prepare {
 	$self->dbh->do('PRAGMA auto_vacuum = 0');
 	$self->dbh->do('VACUUM');
 
+	# Set the page cache if needed
+	if ( Params::Util::_POSINT($self->sqlite_cache) ) {
+		my $page_size = $self->dbh->selectrow_arrayref('PRAGMA page_size')->[0];
+		if ( $page_size ) {
+			my $cache_size = $self->sqlite_cache * 1024 * 1024 / $page_size;
+			$self->dbh->do("PRAGMA cache_size = $cache_size");
+		}
+	}
+
 	return 1;
 }
 
@@ -117,7 +127,9 @@ sub finish {
 	$self->dbh->do('PRAGMA synchronous  = NORMAL');
 	$self->dbh->do('PRAGMA temp_store   = 0');
 	$self->dbh->do('PRAGMA locking_mode = NORMAL');
-	$self->dbh->do('VACUUM');
+
+	# Temporarily disabled, takes way too long for large databases
+	# $self->dbh->do('VACUUM');
 
 	return 1;
 }
@@ -308,14 +320,17 @@ sub fill {
 	$from->execute( @_ );
 
 	# Stream the data into the target table
-	$self->dbh->begin_work;
 	my $to = $self->dbh->prepare($insert) or croak($DBI::errstr);
+	$self->dbh->begin_work;
+	$self->dbh->{AutoCommit} = 0;
 	while ( my $row = $from->fetchrow_arrayref ) {
 		$to->execute( @$row );
-		$rows++;
+		next if ++$rows % 10000;
+		$self->dbh->commit;
 	}
-	$to->finish;
 	$self->dbh->commit;
+	$self->dbh->{AutoCommit} = 1;
+	$to->finish;
 
 	# Done
 	$from->finish;
@@ -334,16 +349,30 @@ sub index_table {
 }
 
 sub index_column {
-	my $self = shift;
-	my ($table, $column) = (@_ == 1) ? (split /\./, $_[0]) : @_;
+	my $self    = shift;
+	my ($t, $c) = _COLUMN(@_);
+	my $unique  = _UNIQUE($self->dbh, $t, $c) ? 'UNIQUE' : '';
+	$self->dbh->do("CREATE $unique INDEX IF NOT EXISTS idx__${t}__${c} ON ${t} ( ${c} )");
+}
 
-	# Is the column unique?
-	my $rows     = $self->dbh->selectrow_arrayref("SELECT COUNT(*) FROM $table")->[0];
-	my $distinct = $self->dbh->selectrow_arrayref("SELECT COUNT(DISTINCT $column) FROM $table")->[0];
-	my $unique   = ($rows == $distinct) ? 'UNIQUE' : '';
 
-	# Create the index
-	$self->dbh->do("CREATE $unique INDEX IF NOT EXISTS idx__${table}__$column ON $table ( $column )");
+
+
+
+#####################################################################
+# Support Functions
+
+sub _UNIQUE {
+	my $dbh     = shift;
+	my ($t, $c) = _COLUMN(@_);
+	my $count   = $dbh->selectrow_arrayref(
+		"SELECT COUNT(*), COUNT(DISTINCT $c) FROM $t"
+	);
+	return !! ( $count->[0] eq $count->[1] );
+}
+
+sub _COLUMN {
+	(@_ == 1) ? (split /\./, $_[0]) : @_;
 }
 
 1;
