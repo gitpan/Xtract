@@ -26,10 +26,13 @@ requires:
   DBD::SQLite: 1.25
   DBI: 1.57
   File::Remove: 1.42
+  File::Which: 0.05
   Getopt::Long: 2.37
   IO::Compress::Bzip2: 2.008
   IO::Compress::Gzip: 2.008
-  Object::Tiny: 1.06
+  IPC::Run3: 0.042
+  Moose: 0.73
+  MooseX::Types::Common::Numeric: 0.001
   Params::Util: 0.35
   Time::Elapsed: 0.24
   Time::HiRes: 1.9709
@@ -38,4 +41,4 @@ resources:
   ChangeLog: http://fisheye2.atlassian.com/changelog/cpan/trunk/Xtract
   license: http://dev.perl.org/licenses/
   repository: http://svn.ali.as/cpan/trunk/Xtract
-version: 0.07
+version: 0.08
