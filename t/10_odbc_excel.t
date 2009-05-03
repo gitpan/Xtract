@@ -9,6 +9,13 @@ BEGIN {
 use Test::More;
 use DBI;
 BEGIN {
+	# Skip for legitimate reasons first
+	unless ( $^O eq 'MSWin32' ) {
+		plan( skip_all => 'Not on Win32' );
+	}
+	unless ( grep { $_ eq 'ODBC' } DBI->available_drivers ) {
+		plan( skip_all => 'DBI driver ODBC is not available' );
+	}
 	plan( skip_all => 'Skipping ODBC driver test' );
 	#if ( grep { $_ eq 'ODBC' } DBI->available_drivers ) {
 		#plan( tests => 10 );

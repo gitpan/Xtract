@@ -10,8 +10,11 @@ inc/Module/Install/Scripts.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/With.pm
 inc/Module/Install/WriteAll.pm
-lib/DBIx/Publish.pm
 lib/Xtract.pm
+lib/Xtract/LZMA.pm
+lib/Xtract/Scan.pm
+lib/Xtract/Scan/mysql.pm
+lib/Xtract/Scan/SQLite.pm
 lib/Xtract/Table.pm
 LICENSE
 Makefile.PL
@@ -20,9 +23,12 @@ META.yml
 README
 script/xtract
 t/01_compile.t
-t/02_dbix_publish.t
+t/02_new.t
+t/03_simple.t
 t/10_odbc_excel.t
+t/11_mysql.t
 t/97_meta.t
 t/98_pod.t
 t/99_pmv.t
 t/data/Book1.xls
+t/data/Foo-Bar.sqlite

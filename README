@@ -21,7 +21,7 @@ AUTHOR
     Adam Kennedy <adamk@cpan.org>
 
 SEE ALSO
-    DBI, DBIx::Publish
+    DBI
 
 COPYRIGHT
     Copyright 2009 Adam Kennedy.
