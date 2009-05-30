@@ -12,6 +12,7 @@ inc/Module/Install/With.pm
 inc/Module/Install/WriteAll.pm
 lib/Xtract.pm
 lib/Xtract/LZMA.pm
+lib/Xtract/Publish.pm
 lib/Xtract/Scan.pm
 lib/Xtract/Scan/mysql.pm
 lib/Xtract/Scan/SQLite.pm
@@ -25,6 +26,7 @@ script/xtract
 t/01_compile.t
 t/02_new.t
 t/03_simple.t
+t/04_publish.t
 t/10_odbc_excel.t
 t/11_mysql.t
 t/97_meta.t

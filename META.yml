@@ -8,10 +8,12 @@ build_requires:
   File::Remove: 1.42
   File::Spec: 0.80
   Test::More: 0.42
+  Test::NoWarnings: 0.084
+  Test::Script: 1.03
 configure_requires:
   ExtUtils::MakeMaker: 6.42
 distribution_type: module
-generated_by: 'Module::Install version 0.86'
+generated_by: 'Module::Install version 0.91'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -25,6 +27,7 @@ no_index:
 requires:
   DBD::SQLite: 1.25
   DBI: 1.57
+  File::Copy: 0
   File::Remove: 1.42
   File::Which: 0.05
   Getopt::Long: 2.37
@@ -41,4 +44,4 @@ resources:
   ChangeLog: http://fisheye2.atlassian.com/changelog/cpan/trunk/Xtract
   license: http://dev.perl.org/licenses/
   repository: http://svn.ali.as/cpan/trunk/Xtract
-version: 0.09
+version: 0.10
