@@ -3,29 +3,64 @@ package Xtract::Scan;
 use 5.008005;
 use strict;
 use warnings;
-use Carp         'croak';
-use Params::Util '_DRIVER';
+use Carp         ();
+use Params::Util ();
 
-our $VERSION = '0.13';
+our $VERSION = '0.15';
 
-use Moose 0.73;
 
-has dbh => ( is => 'ro', isa => 'DBI::db' );
 
-no Moose;
+
+
+######################################################################
+# Class Methods
+
+# Scanner factory
+sub create {
+	my $class  = shift;
+	my $dbh    = shift;
+	my $name   = $dbh->{Driver}->{Name};
+	my $driver = Params::Util::_DRIVER("Xtract::Scan::$name", 'Xtract::Scan')
+		or Carp::croak('No driver for the database handle');
+	$driver->new( dbh => $dbh );
+}
+
+
+
+
+
+######################################################################
+# Constructor and Accessors
+
+sub new {
+	my $class = shift;
+	my $self  = bless { @_ }, $class;
+
+	# Check params
+	unless ( Params::Util::_INSTANCE($self->dbh, 'DBI::db') ) {
+		Carp::croak("Param 'dbh' is not a 'DBI::db' object");
+	}
+
+	return $self;
+}
+
+sub dbh {
+	$_[0]->{dbh};
+}
+
+
+
+
+
+######################################################################
+# Database Introspection
 
 sub tables {
 	$_[0]->dbh->tables;
 }
 
-# Factory method
-sub create {
-	my $class  = shift;
-	my $dbh    = shift;
-	my $name   = $dbh->{Driver}->{Name};
-	my $driver = _DRIVER("Xtract::Scan::$name", 'Xtract::Scan')
-		or croak('No driver for the database handle');
-	$driver->new( dbh => $dbh );
+sub columns {
+	$_[0]->dbh->column_info
 }
 
 1;

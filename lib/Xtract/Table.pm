@@ -3,27 +3,70 @@ package Xtract::Table;
 # Object that represents a single table in the destination database.
 
 use 5.008005;
-use Moose;
-use MooseX::Types::Common::Numeric 'PositiveInt';
-use Params::Util '_IDENTIFIER';
+use strict;
+use Params::Util   ();
+use Xtract::Column ();
 
-our $VERSION = '0.13';
+our $VERSION = '0.15';
 
-has name => {
-	is  => 'ro',
-	isa => 'Str',
-};
 
-subtype XtractTableName
-	=> as 'Str'
-	=> where {
-		defined _IDENTIFIER($_)
-		and
-		$_ eq lc($_)
+
+
+
+######################################################################
+# Constructor and Accessors
+
+sub new {
+	my $class = shift;
+	my $self  = bless { @_ }, $class;
+
+	# Check params
+	unless ( Params::Util::_IDENTIFIER($self->name) ) {
+		my $name = $self->name;
+		Carp::croak("Missing or invalid name '$name'");
 	}
-	=> 
+	unless ( $self->name eq lc $self->name ) {
+		$self->{name} = lc $self->name;
+	}
+	unless ( Params::Util::_INSTANCE($self->scan, 'Xtract::Scan') ) {
+		Carp::croak("Param 'scan' is not a 'Xtract::Scan' object");
+	}
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+	# Capture column information
+	my @columns = $self->columns;
+	
+
+	return $self;
+}
+
+sub name {
+	$_[0]->{name};
+}
+
+sub scan {
+	$_[0]->{scan};
+}
+
+
+
+
+
+######################################################################
+# Introspection Methods
+
+sub columns {
+	
+}
+
+
+
+
+
+######################################################################
+# SQL Generation
+
+sub create {
+
+}
 
 1;

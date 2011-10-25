@@ -11,6 +11,7 @@ inc/Module/Install/Win32.pm
 inc/Module/Install/With.pm
 inc/Module/Install/WriteAll.pm
 lib/Xtract.pm
+lib/Xtract/Column.pm
 lib/Xtract/LZMA.pm
 lib/Xtract/Publish.pm
 lib/Xtract/Scan.pm
@@ -27,10 +28,12 @@ t/01_compile.t
 t/02_new.t
 t/03_simple.t
 t/04_publish.t
+t/09_generic.t
 t/10_odbc_excel.t
 t/11_mysql.t
-t/97_meta.t
-t/98_pod.t
-t/99_pmv.t
 t/data/Book1.xls
 t/data/Foo-Bar.sqlite
+t/lib/MyXtract.pm
+xt/meta.t
+xt/pmv.t
+xt/pod.t

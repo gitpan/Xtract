@@ -2,22 +2,24 @@ package Xtract::Scan::SQLite;
 
 use 5.008005;
 use strict;
-use warnings;
+use Xtract::Scan ();
 
-our $VERSION = '0.13';
+our $VERSION = '0.15';
+our @ISA     = 'Xtract::Scan';
 
-use Moose 0.73;
 
-extends 'Xtract::Scan';
 
-override tables => sub {
+
+
+######################################################################
+# Introspection Methods
+
+sub tables {
 	grep {
 		! /^sqlite_/
 	} map {
 		/"([^\"]+)"$/ ? "$1" : $_
-	} super();
+	} $_[0]->dbh->tables;
 };
-
-no Moose;
 
 1;

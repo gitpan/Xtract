@@ -32,25 +32,28 @@ use Time::HiRes          1.9709 ();
 use Time::Elapsed          0.24 ();
 use DBI                    1.57 ':sql_types';
 use DBD::SQLite            1.25 ();
-use Xtract::Publish             ();
 use Xtract::Scan                ();
 use Xtract::Scan::SQLite        ();
 use Xtract::Scan::mysql         ();
+use Xtract::Publish             ();
+use Xtract::Column              ();
+use Xtract::Table               ();
 
-our $VERSION = '0.13';
+our $VERSION = '0.15';
 
-use Moose 0.73;
-use MooseX::Types::Common::Numeric 0.001 'PositiveInt';
+use Mouse 0.93;
 
-has from         => ( is => 'ro', isa => 'Str' );
-has user         => ( is => 'ro', isa => 'Str' );
-has pass         => ( is => 'ro', isa => 'Str' );
-has to           => ( is => 'ro', isa => 'Str' );
+has from         => ( is => 'ro', isa => 'Str'  );
+has user         => ( is => 'ro', isa => 'Str'  );
+has pass         => ( is => 'ro', isa => 'Str'  );
+has to           => ( is => 'ro', isa => 'Str'  );
 has index        => ( is => 'ro', isa => 'Bool' );
 has trace        => ( is => 'ro', isa => 'Bool' );
-has sqlite_cache => ( is => 'ro', isa => PositiveInt );
+has sqlite_cache => ( is => 'ro', isa => 'Int'  );
 has argv         => ( is => 'ro', isa => 'ArrayRef[Str]' );
 has publish      => ( is => 'rw', isa => 'Xtract::Publish' );
+
+no Mouse;
 
 
 
@@ -128,9 +131,10 @@ sub run {
 
 	# Generate any required indexes
 	if ( $self->index ) {
-		foreach my $table ( $self->from_tables ) {
-			$self->say("Indexing table $table");
-			$self->index_table( $table );
+		foreach my $table ( $self->to_tables ) {
+			my $name = $table->name;
+			$self->say("Indexing table $name");
+			$self->index_table($table);
 		}
 	}
 
@@ -193,11 +197,12 @@ sub add {
 
 	# Push all source tables into the target database
 	foreach my $table ( $self->from_tables ) {
-		$self->say("Publishing table $table");
+		my $name = $table->name;
+		$self->say("Publishing table $name");
 		my $tstart = Time::HiRes::time();
-		my $rows   = $self->add_table( $table );
+		my $rows   = $self->add_table($table);
 		my $rate   = int($rows / (Time::HiRes::time() - $tstart));
-		$self->say("Completed  table $table ($rows rows @ $rate/sec)");
+		$self->say("Completed  table $name ($rows rows @ $rate/sec)");
 	}
 
 	return 1;
@@ -206,7 +211,7 @@ sub add {
 sub add_table {
 	my $self = shift;
 
-	# Do we have support table copying from this database?
+	# Do we have support for table copying from this database?
 	my $driver = $self->from_dbh->{Driver}->{Name};
 	if ( $driver eq 'SQLite' ) {
 		return $self->_sqlite_table(@_);
@@ -215,18 +220,20 @@ sub add_table {
 	}
 
 	# Hand off to the regular select method
-	my $table  = shift;
-	my $from   = shift || $table;
-	return $self->add_select( $table,
-		"select * from $from"
+	my $table = shift;
+	my $from  = shift || $table->name;
+	return $self->add_select(
+		$table,
+		"select * from $from",
 	);
 }
 
 sub _sqlite_table {
-	my $self   = shift;
-	my $table  = shift;
-	my $from   = shift || $table;
-	
+	my $self  = shift;
+	my $table = shift;
+	my $tname = $table->name;
+	my $from  = shift || $tname;
+
 	# With a direct table copy, we can interrogate types from the
 	# source table directly (hopefully).
 	my $info = eval {
@@ -243,6 +250,7 @@ sub _sqlite_table {
 	my @type = ();
 	my @blob = ();
 	foreach my $column ( @$info ) {
+		$column->{TYPE_NAME} = uc $column->{TYPE_NAME};
 		my $name = $column->{COLUMN_NAME};
 		my $type = defined($column->{COLUMN_SIZE})
 			? "$column->{TYPE_NAME}($column->{COLUMN_SIZE})"
@@ -254,7 +262,7 @@ sub _sqlite_table {
 
 	# Create the table
 	$self->to_dbh->do(
-		"CREATE TABLE $table (\n"
+		"CREATE TABLE $tname (\n"
 		. join( ",\n", map { "\t$_" } @type )
 		. "\n)"
 	);
@@ -263,15 +271,16 @@ sub _sqlite_table {
 	my $placeholders = join ", ",  map { '?' } @$info;
 	return $self->fill(
 		select => [ "SELECT * FROM $from" ],
-		insert => "INSERT INTO $table VALUES ( $placeholders )",
-		blobs  => scalar(grep { $_ } @blob) ? \@blob : undef,
+		insert => "INSERT INTO $tname VALUES ( $placeholders )",
+		blobs  => scalar( grep { $_ } @blob ) ? \@blob : undef,
 	);
 }
 
 sub _mysql_table {
 	my $self  = shift;
 	my $table = shift;
-	my $from  = shift || $table;
+	my $tname = $table->name;
+	my $from  = shift || $tname;
 
 	# Capture table metadata
 	my $sth = $self->from_dbh->prepare("select * from $from");
@@ -282,7 +291,7 @@ sub _mysql_table {
 	my @type = @{$sth->{TYPE}};
 	my @null = @{$sth->{NULLABLE}};
 	my @blob = @{$sth->{mysql_is_blob}};
-	$sth->finish;	
+	$sth->finish;
 
 	# Generate the create fragments
 	foreach my $i ( 0 .. $#name ) {
@@ -304,7 +313,7 @@ sub _mysql_table {
 
 	# Create the table
 	$self->to_dbh->do(
-		"CREATE TABLE $table (\n"
+		"CREATE TABLE $tname (\n"
 		. join( ",\n",
 			map {
 				"\t$name[$_] $type[$_] $null[$_]"
@@ -317,14 +326,14 @@ sub _mysql_table {
 	my $placeholders = join ", ",  map { '?' } @name;
 	return $self->fill(
 		select => [ "SELECT * FROM $from" ],
-		insert => "INSERT INTO $table VALUES ( $placeholders )",
-		blobs  => scalar(grep { $_ } @blob) ? \@blob : undef,
+		insert => "INSERT INTO $tname VALUES ( $placeholders )",
+		blobs  => scalar( grep { $_ } @blob ) ? \@blob : undef,
 	);
 }
 
 sub add_select {
 	my $self   = shift;
-	my $table  = lc(shift);
+	my $tname  = shift;
 	my $select = shift;
 	my @params = @_;
 
@@ -378,7 +387,7 @@ sub add_select {
 					}
 				}
 				if ( defined Params::Util::_NUMBER($value) ) {
-					$hash->{NUMBER}++;					
+					$hash->{NUMBER}++;
 				}
 				if ( length($value) <= 255 ) {
 					$hash->{TEXT}++;
@@ -420,8 +429,8 @@ sub add_select {
 
 	# Create the target table
 	$self->to_dbh->do(
-		"CREATE TABLE $table (\n"
-		. join(",\n", map { "\t$_" } @type) 
+		"CREATE TABLE $tname (\n"
+		. join(",\n", map { "\t$_" } @type)
 		. "\n)"
 	);
 
@@ -429,8 +438,8 @@ sub add_select {
 	my $placeholders = join ", ",  map { '?' } @names;
 	return $self->fill(
 		select => [ $select, @params ],
-		insert => "INSERT INTO $table VALUES ( $placeholders )",
-		blobs  => scalar(grep { $_ } @blob) ? \@blob : undef,
+		insert => "INSERT INTO $tname VALUES ( $placeholders )",
+		blobs  => scalar( grep { $_ } @blob ) ? \@blob : undef,
 	);
 }
 
@@ -484,9 +493,10 @@ sub fill {
 sub index_table {
 	my $self  = shift;
 	my $table = shift;
-	my $info  = $self->to_dbh->selectall_arrayref("PRAGMA table_info($table)");
+	my $tname = $table->name;
+	my $info  = $self->to_dbh->selectall_arrayref("PRAGMA table_info($tname)");
 	foreach my $column ( map { $_->[1] } @$info ) {
-		$self->index_column($table, $column);
+		$self->index_column($tname, $column);
 	}
 	return 1;
 }
@@ -537,9 +547,31 @@ sub from_scan {
 sub from_tables {
 	my $self = shift;
 	unless ( $self->{from_tables} ) {
-		$self->{from_tables} = [ $self->from_scan->tables ];
+		my $scan = $self->from_scan;
+		$self->{from_tables} = {
+			map {
+				$_ => Xtract::Table->new(
+					name => $_,
+					scan => $scan,
+				)
+			} $scan->tables
+		};
 	}
-	return @{$self->{from_tables}};
+	return map {
+		$self->{from_tables}->{$_}
+	} sort keys %{$self->{from_tables}};
+}
+
+sub from_table {
+	my $self = shift;
+	my $name = shift;
+	unless ( $self->{from_tables} ) {
+		$self->from_tables;
+	}
+	unless ( exists $self->{from_tables}->{$name} ) {
+		 die "No such table '$name'";
+	}
+	return $self->{from_tables}->{$name}
 }
 
 
@@ -565,6 +597,26 @@ sub to_dbh {
 		}
 	}
 	return $self->{to_dbh};
+}
+
+sub to_scan {
+	Xtract::Scan->create( shift->to_dbh );
+}
+
+sub to_tables {
+	my $self   = shift;
+	my $scan   = $self->to_scan;
+	my $tables = {
+		map {
+			$_ => Xtract::Table->new(
+				name => $_,
+				scan => $scan,
+			)
+		} $scan->tables
+	};
+	return map {
+		$tables->{$_}
+	} sort keys %$tables;
 }
 
 # Prepare the target database
@@ -681,7 +733,7 @@ L<DBI>
 
 =head1 COPYRIGHT
 
-Copyright 2009 - 2010 Adam Kennedy.
+Copyright 2009 - 2011 Adam Kennedy.
 
 This program is free software; you can redistribute
 it and/or modify it under the same terms as Perl itself.
